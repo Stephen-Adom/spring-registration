@@ -8,4 +8,6 @@ import com.alaska.securitylearn.model.User;
 public interface AuthenticationServiceInterface {
     public User registerUser(BindingResult validationResult, User user)
             throws ValidationErrorsException, UserAlreadyExistException;
+
+    public User authenticateUser(BindingResult validationResult, User user) throws ValidationErrorsException;
 }

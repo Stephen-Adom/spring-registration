@@ -39,14 +39,18 @@ public class CustomExceptionHandler {
     public ResponseEntity<ValidationErrorMessage> handleValidationError(ValidationErrorsException exception) {
         List<String> messages = new ArrayList<String>();
 
-        for (FieldError error : exception.getFieldErrors()) {
-            messages.add(error.getDefaultMessage());
+        if (exception.getMessage() != null) {
+            messages.add(exception.getMessage());
+        } else {
+            for (FieldError error : exception.getFieldErrors()) {
+                messages.add(error.getDefaultMessage());
+            }
         }
 
-        ValidationErrorMessage errormessage = ValidationErrorMessage.builder().status(HttpStatus.UNPROCESSABLE_ENTITY)
+        ValidationErrorMessage errormessage = ValidationErrorMessage.builder().status(exception.getStatus())
                 .messages(messages).build();
 
-        return new ResponseEntity<ValidationErrorMessage>(errormessage, HttpStatus.UNPROCESSABLE_ENTITY);
+        return new ResponseEntity<ValidationErrorMessage>(errormessage, exception.getStatus());
 
     }
 }

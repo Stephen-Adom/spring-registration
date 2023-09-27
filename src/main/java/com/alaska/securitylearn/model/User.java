@@ -11,6 +11,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.alaska.securitylearn.model.validationGroups.LoginValidationGroup;
 import com.alaska.securitylearn.model.validationGroups.RegisterValidationGroup;
 
 import jakarta.persistence.Entity;
@@ -52,14 +53,14 @@ public class User implements UserDetails {
     @NotBlank(message = "Lastname is required", groups = RegisterValidationGroup.class)
     private String lastname;
 
-    @NotBlank(message = "Username is required", groups = RegisterValidationGroup.class)
+    @NotBlank(message = "Username is required", groups = { RegisterValidationGroup.class, LoginValidationGroup.class })
     private String username;
 
     @Email(message = "Enter a valid email address", groups = RegisterValidationGroup.class)
     @NotBlank(message = "Email address is required", groups = RegisterValidationGroup.class)
     private String email;
 
-    @NotBlank(message = "Password is required", groups = RegisterValidationGroup.class)
+    @NotBlank(message = "Password is required", groups = { RegisterValidationGroup.class, LoginValidationGroup.class })
     private String password;
 
     private final boolean enabled = true;
