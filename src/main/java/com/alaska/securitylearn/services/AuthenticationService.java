@@ -1,5 +1,9 @@
 package com.alaska.securitylearn.services;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -9,10 +13,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 
+import com.alaska.securitylearn.exceptions.TokenExpiredException;
+import com.alaska.securitylearn.exceptions.UnauthorizedRequestException;
 import com.alaska.securitylearn.exceptions.UserAlreadyExistException;
 import com.alaska.securitylearn.exceptions.ValidationErrorsException;
+import com.alaska.securitylearn.model.TokenRequest;
 import com.alaska.securitylearn.model.User;
 import com.alaska.securitylearn.repository.UserRepository;
+
+import io.jsonwebtoken.ExpiredJwtException;
 
 @Service
 public class AuthenticationService implements AuthenticationServiceInterface {
@@ -25,6 +34,9 @@ public class AuthenticationService implements AuthenticationServiceInterface {
 
     @Autowired
     private AuthenticationManager authManager;
+
+    @Autowired
+    private JwtService jwtService;
 
     @Override
     public User registerUser(BindingResult validationResult, User user)
@@ -63,5 +75,41 @@ public class AuthenticationService implements AuthenticationServiceInterface {
         }
 
         return (User) this.userRepository.findByUsername(user.getUsername());
+    }
+
+    @Override
+    public Map<String, String> requestAccessToken(TokenRequest refreshToken)
+            throws UnauthorizedRequestException, TokenExpiredException {
+
+        try {
+            String authUsername = this.jwtService.extractUsernameFromToken(refreshToken.getRefreshToken());
+
+            User userDetails = (User) this.userRepository.findByUsername(authUsername);
+            Map<String, String> newTokens = new HashMap<String, String>();
+
+            if (this.jwtService.isTokenValid(refreshToken.getRefreshToken(), userDetails)) {
+                newTokens.put("accessToken", this.generateJwt(userDetails));
+                newTokens.put("refreshToken", this.generateRefreshToken(userDetails));
+
+                return newTokens;
+            }
+
+            return newTokens;
+
+        } catch (ExpiredJwtException e) {
+            throw new TokenExpiredException("Refresh token is expired", HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    public String generateJwt(User user) {
+        Map<String, Object> userClaims = new HashMap<String, Object>();
+        userClaims.put("iss", "Alask Security");
+        userClaims.put("roles", user.getAuthorities());
+
+        return this.jwtService.generateToken(userClaims, user);
+    }
+
+    public String generateRefreshToken(User user) {
+        return this.jwtService.generateRefreshToken(user);
     }
 }
