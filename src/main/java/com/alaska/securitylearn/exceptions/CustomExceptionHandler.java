@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import com.alaska.securitylearn.model.ErrorResponse;
 import com.alaska.securitylearn.model.ValidationErrorMessage;
 
+import io.jsonwebtoken.ExpiredJwtException;
+
 @ControllerAdvice
 @ResponseStatus
 public class CustomExceptionHandler {
@@ -53,4 +55,11 @@ public class CustomExceptionHandler {
         return new ResponseEntity<ValidationErrorMessage>(errormessage, exception.getStatus());
 
     }
+
+    @ExceptionHandler(TokenExpiredException.class)
+    public ResponseEntity<ErrorResponse> handleExpiredToken(TokenExpiredException exception) {
+        return new ResponseEntity<ErrorResponse>(new ErrorResponse(HttpStatus.UNAUTHORIZED, "Token"),
+                HttpStatus.UNAUTHORIZED);
+    }
+
 }
